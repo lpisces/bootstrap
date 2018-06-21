@@ -5,21 +5,24 @@ import (
 	"log"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
-	"net/http"
 	"net"
 	"fmt"
+	"github.com/lpisces/bootstrap/cmd/serve/mvc/controller"
 )
 
 func Run(c *cli.Context) {
 
 	e := echo.New()
 
+	// public
+	e.Static("/public", "public")
+
 	// Middleware
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
 	// Routes
-	e.GET("/", hello)
+	e.GET("/", controller.Hello)
 
 	// Start server
 	l, err := net.Listen("tcp", fmt.Sprintf("%s:%s", c.String("bind"), c.String("port")))
@@ -35,7 +38,4 @@ func Run(c *cli.Context) {
 	}
 }
 
-// Handler
-func hello(c echo.Context) error {
-	return c.String(http.StatusOK, "Hello, World!")
-}
+
