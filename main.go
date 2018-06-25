@@ -33,6 +33,11 @@ func main() {
 					Usage: "bind host",
 					Value: "127.0.0.1",
 				},
+				cli.StringFlag{
+					Name: "config, c",
+					Usage: "load config file",
+					Value: "./config.ini",
+				},
 			},
 		},
 	}

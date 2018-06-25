@@ -1,14 +1,16 @@
 package serve
 
 import (
-	"gopkg.in/urfave/cli.v1"
-	"log"
+	"fmt"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
-	"net"
-	"fmt"
 	"github.com/lpisces/bootstrap/cmd/serve/mvc/controller"
+	"gopkg.in/urfave/cli.v1"
+	"log"
+	"net"
 )
+
+
 
 func Run(c *cli.Context) {
 
@@ -22,7 +24,7 @@ func Run(c *cli.Context) {
 	e.Use(middleware.Recover())
 
 	// Routes
-	e.GET("/", controller.Hello)
+	e.GET("/", controller.Welcome(c))
 
 	// Start server
 	l, err := net.Listen("tcp", fmt.Sprintf("%s:%s", c.String("bind"), c.String("port")))

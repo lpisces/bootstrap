@@ -1,4 +1,4 @@
-package mvc
+package controller
 
 import (
 	"io"
