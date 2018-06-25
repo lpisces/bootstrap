@@ -1,4 +1,4 @@
-package serve
+package utils
 
 import (
 	"gopkg.in/ini.v1"
@@ -14,13 +14,13 @@ type Config struct {
 }
 
 type DatabaseConfig struct {
-	Database string // database typo
-	Dialect  string // database connection
+	Dialect string // database dialect
+	Args    string // database args
 }
 
 type ServerConfig struct {
-	Port     string // listen port
-	Host     string // serve host
+	Port string // listen port
+	Host string // serve host
 }
 
 // loadConfig load config or create config file if not exist
@@ -46,10 +46,12 @@ func (conf *Config) Load(c *cli.Context) (err error) {
 	conf.Mode = cfg.Section("").Key("mode").In("development", []string{"development", "production", "testing"})
 
 	// database
-	conf.Database.Database = cfg.Section("database").Key("database").In("sqlite3", []string{"sqlite3", "mysql"})
-	conf.Database.Dialect = cfg.Section("database").Key("dialect").String()
+	conf.Database = &DatabaseConfig{}
+	conf.Database.Dialect = cfg.Section("database").Key("dialect").In("sqlite3", []string{"sqlite3", "mysql"})
+	conf.Database.Args = cfg.Section("database").Key("args").String()
 
 	// server
+	conf.Server = &ServerConfig{}
 	conf.Server.Host = cfg.Section("server").Key("host").String()
 	conf.Server.Port = cfg.Section("server").Key("port").String()
 
