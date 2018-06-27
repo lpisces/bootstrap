@@ -6,16 +6,32 @@ import (
 	"github.com/labstack/echo/middleware"
 	"github.com/labstack/gommon/log"
 	"github.com/lpisces/bootstrap/cmd/serve"
+	"github.com/lpisces/bootstrap/cmd/serve/mvc/model"
 	"gopkg.in/urfave/cli.v1"
 	"net"
+	"net/http"
 )
 
 func setRoute(e *echo.Echo) {
+	e.GET("/", func(c echo.Context) error {
+		db, err := model.GetDB()
+		if err != nil {
+			return nil
+		}
+		log.Info(db)
+		return c.String(http.StatusOK, "Hello, World!")
+	})
 }
 
 // serve start web server
 func startSrv() (err error) {
 
+	// migrate db
+	if err := model.Migrate(); err != nil {
+		log.Fatal(err)
+	}
+
+	// get config
 	config := serve.Conf
 
 	// new echo instance
