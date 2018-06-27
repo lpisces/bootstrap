@@ -1,10 +1,10 @@
 package main
 
 import (
+	"github.com/lpisces/bootstrap/cmd/serve/mvc"
 	"gopkg.in/urfave/cli.v1"
-	"os"
 	"log"
-	"github.com/lpisces/bootstrap/cmd/serve"
+	"os"
 )
 
 func main() {
@@ -17,26 +17,24 @@ func main() {
 			Name:    "serve",
 			Aliases: []string{"s"},
 			Usage:   "start web server",
-			Action: serve.Run,
+			Action:  mvc.Run,
 			Flags: []cli.Flag{
-				cli.BoolFlag{
-					Name:  "debug, d",
-					Usage: "show debug info",
+				cli.StringFlag{
+					Name:  "env, e",
+					Usage: "set run env",
+					Value: "development",
 				},
 				cli.StringFlag{
-					Name: "port, p",
+					Name:  "port, p",
 					Usage: "listen port",
-					Value: "1323",
 				},
 				cli.StringFlag{
-					Name: "bind, b",
+					Name:  "bind, b",
 					Usage: "bind host",
-					Value: "127.0.0.1",
 				},
 				cli.StringFlag{
-					Name: "config, c",
+					Name:  "config, c",
 					Usage: "load config file",
-					Value: "./config.ini",
 				},
 			},
 		},
