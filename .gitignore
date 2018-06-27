@@ -13,3 +13,6 @@
 
 # DB file
 *.db
+
+# lib
+./vendor

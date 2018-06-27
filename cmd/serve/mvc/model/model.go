@@ -5,6 +5,7 @@ import (
 	"github.com/lpisces/bootstrap/cmd/serve"
 
 	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )
 

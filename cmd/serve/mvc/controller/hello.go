@@ -5,8 +5,6 @@ import (
 	"net/http"
 )
 
-func Hello(c echo.Context) error {
-	//var user model.User
-	//log.Print(user)
-	return c.String(http.StatusOK, "Hello, World!")
+func HelloHandler(c echo.Context) error {
+	return c.String(http.StatusOK, "Hello!")
 }

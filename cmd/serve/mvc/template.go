@@ -1,9 +1,9 @@
-package controller
+package mvc
 
 import (
-	"io"
 	"github.com/labstack/echo"
 	"html/template"
+	"io"
 )
 
 type Template struct {

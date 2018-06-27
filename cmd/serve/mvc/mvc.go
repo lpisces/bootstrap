@@ -8,20 +8,9 @@ import (
 	"github.com/lpisces/bootstrap/cmd/serve"
 	"github.com/lpisces/bootstrap/cmd/serve/mvc/model"
 	"gopkg.in/urfave/cli.v1"
+	"html/template"
 	"net"
-	"net/http"
 )
-
-func setRoute(e *echo.Echo) {
-	e.GET("/", func(c echo.Context) error {
-		db, err := model.GetDB()
-		if err != nil {
-			return nil
-		}
-		log.Info(db)
-		return c.String(http.StatusOK, "Hello, World!")
-	})
-}
 
 // serve start web server
 func startSrv() (err error) {
@@ -37,6 +26,12 @@ func startSrv() (err error) {
 	// new echo instance
 	e := echo.New()
 
+	// set template render
+	t := &Template{
+		templates: template.Must(template.ParseGlob("cmd/serve/mvc/view/*.html")),
+	}
+	e.Renderer = t
+
 	// public
 	e.Static("/public", "public")
 
@@ -45,7 +40,7 @@ func startSrv() (err error) {
 	e.Use(middleware.Recover())
 
 	// Routes
-	setRoute(e)
+	Route(e)
 
 	// Start server
 	l, err := net.Listen("tcp", fmt.Sprintf("%s:%s", config.Srv.Host, config.Srv.Port))
@@ -54,7 +49,14 @@ func startSrv() (err error) {
 	}
 
 	e.Listener = l
-	log.Printf("http server started on %s:%s in %s model", config.Srv.Host, config.Srv.Port, config.Mode)
+
+	e.HideBanner = true
+
+	if serve.Debug {
+		e.Logger.SetLevel(log.DEBUG)
+	}
+
+	e.Logger.Infof("http server started on %s:%s in %s model", config.Srv.Host, config.Srv.Port, config.Mode)
 	e.Logger.Fatal(e.Start(""))
 	return
 }
@@ -72,11 +74,6 @@ func Run(c *cli.Context) (err error) {
 		}
 	}
 
-	// run mode
-	if config.Mode != "production" {
-		serve.Debug = true
-	}
-
 	// flag override ini file config
 	bind := c.String("bind")
 	if bind != "" {
@@ -88,7 +85,17 @@ func Run(c *cli.Context) (err error) {
 		config.Srv.Port = port
 	}
 
+	env := c.String("env")
+	if env != "" {
+		config.Mode = env
+	}
+
 	serve.Conf = config
+
+	// run mode
+	if config.Mode != "production" {
+		serve.Debug = true
+	}
 
 	// start server
 	err = startSrv()
