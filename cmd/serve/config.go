@@ -36,7 +36,7 @@ func DefaultConfig() (config *Config) {
 	db.DataSource = "./bootstrap.db"
 
 	srv := &SrvConfig{}
-	srv.Host = "127.0.0.1"
+	srv.Host = "0.0.0.0"
 	srv.Port = "1323"
 
 	config.Mode = "development"

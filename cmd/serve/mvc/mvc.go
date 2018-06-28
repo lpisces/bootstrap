@@ -64,9 +64,12 @@ func startSrv() (err error) {
 	// public
 	//e.Static("/public", "public")
 	//staticPath := "public"
-	publicBox := packr.NewBox("../../../public")
-	assetHandler := http.FileServer(publicBox)
-	e.GET("/", echo.WrapHandler(assetHandler))
+
+	if _, err := os.Stat("public"); err == nil {
+		publicBox := packr.NewBox("../../../public")
+		assetHandler := http.FileServer(publicBox)
+		e.GET("/", echo.WrapHandler(assetHandler))
+	}
 
 	// Middleware
 	e.Use(middleware.Logger())
