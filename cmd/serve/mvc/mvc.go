@@ -2,6 +2,7 @@ package mvc
 
 import (
 	"fmt"
+	"github.com/gobuffalo/packr"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/labstack/gommon/log"
@@ -10,6 +11,10 @@ import (
 	"gopkg.in/urfave/cli.v1"
 	"html/template"
 	"net"
+	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
 )
 
 // serve start web server
@@ -27,13 +32,41 @@ func startSrv() (err error) {
 	e := echo.New()
 
 	// set template render
+	viewPath := "cmd/serve/mvc/view"
+	box := packr.NewBox("./view")
+	templates := template.New("")
+
+	if _, err := os.Stat(viewPath); err == nil {
+		err = filepath.Walk(viewPath, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if !info.IsDir() {
+				relativePath := strings.Replace(path, viewPath+"/", "", 1)
+				//log.Info(box.String(relativePath))
+				_, err := templates.Parse(box.String(relativePath))
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			e.Logger.Fatal(err)
+		}
+	}
+
 	t := &Template{
-		templates: template.Must(template.ParseGlob("cmd/serve/mvc/view/*.html")),
+		templates: templates,
 	}
 	e.Renderer = t
 
 	// public
-	e.Static("/public", "public")
+	//e.Static("/public", "public")
+	//staticPath := "public"
+	publicBox := packr.NewBox("../../../public")
+	assetHandler := http.FileServer(publicBox)
+	e.GET("/", echo.WrapHandler(assetHandler))
 
 	// Middleware
 	e.Use(middleware.Logger())
