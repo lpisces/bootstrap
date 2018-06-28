@@ -66,7 +66,6 @@ func startSrv() (err error) {
 	//staticPath := "public"
 
 	if _, err := os.Stat("public"); err == nil {
-		log.Info("pack public")
 		publicBox := packr.NewBox("../../../public")
 		assetHandler := http.FileServer(publicBox)
 		e.GET("/public/*", echo.WrapHandler(http.StripPrefix("/public/", assetHandler)))
