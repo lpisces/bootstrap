@@ -14,6 +14,7 @@ type Config struct {
 	Mode string
 	DB   *DBConfig
 	Srv  *SrvConfig
+	Site *SiteConfig
 }
 
 // DBConfig database config
@@ -28,6 +29,12 @@ type SrvConfig struct {
 	Port string
 }
 
+// SiteConfig site config
+type SiteConfig struct {
+	Name    string
+	BaseURL string
+}
+
 // DefaultConfig get default config
 func DefaultConfig() (config *Config) {
 	config = &Config{}
@@ -38,6 +45,10 @@ func DefaultConfig() (config *Config) {
 	srv := &SrvConfig{}
 	srv.Host = "0.0.0.0"
 	srv.Port = "1323"
+
+	site := &SiteConfig{}
+	site.Name = "Bootstrap"
+	site.BaseURL = "http://127.0.0.1/"
 
 	config.Mode = "development"
 	config.DB = db
@@ -76,9 +87,21 @@ func (config *Config) Load(path string) (err error) {
 		srv.Port = config.Srv.Port
 	}
 
+	// site
+	site := &SiteConfig{}
+	site.Name = cfg.Section("site").Key("name").String()
+	if site.Name == "" {
+		site.Name = config.Site.Name
+	}
+	site.BaseURL = cfg.Section("site").Key("base_url").String()
+	if site.BaseURL == "" {
+		site.BaseURL = config.Site.BaseURL
+	}
+
 	config.Mode = mode
 	config.DB = db
 	config.Srv = srv
+	config.Site = site
 
 	return
 }
