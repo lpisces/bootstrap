@@ -53,6 +53,7 @@ func DefaultConfig() (config *Config) {
 	config.Mode = "development"
 	config.DB = db
 	config.Srv = srv
+	config.Site = site
 	return
 }
 

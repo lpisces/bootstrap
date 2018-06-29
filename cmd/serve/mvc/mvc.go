@@ -7,7 +7,7 @@ import (
 	"github.com/labstack/echo/middleware"
 	"github.com/labstack/gommon/log"
 	"github.com/lpisces/bootstrap/cmd/serve"
-	"github.com/lpisces/bootstrap/cmd/serve/mvc/model"
+	"github.com/lpisces/bootstrap/cmd/serve/mvc/m"
 	"gopkg.in/urfave/cli.v1"
 	"html/template"
 	"net"
@@ -21,7 +21,7 @@ import (
 func startSrv() (err error) {
 
 	// migrate db
-	if err := model.Migrate(); err != nil {
+	if err := m.Migrate(); err != nil {
 		log.Fatal(err)
 	}
 
@@ -32,8 +32,8 @@ func startSrv() (err error) {
 	e := echo.New()
 
 	// set template render
-	viewPath := "cmd/serve/mvc/view"
-	box := packr.NewBox("./view")
+	viewPath := "cmd/serve/mvc/v"
+	box := packr.NewBox("./v")
 	templates := template.New("")
 
 	if _, err := os.Stat(viewPath); err == nil {
@@ -73,8 +73,9 @@ func startSrv() (err error) {
 
 	// Middleware
 	e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
+	//e.Use(middleware.Recover())
 	e.Use(middleware.Gzip())
+	e.Use(middleware.CSRF())
 
 	// Routes
 	Route(e)

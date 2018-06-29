@@ -2,7 +2,7 @@ package mvc
 
 import (
 	"github.com/labstack/echo"
-	c "github.com/lpisces/bootstrap/cmd/serve/mvc/controller"
+	"github.com/lpisces/bootstrap/cmd/serve/mvc/c"
 )
 
 func Route(e *echo.Echo) {

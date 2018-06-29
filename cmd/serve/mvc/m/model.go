@@ -1,4 +1,4 @@
-package model
+package m
 
 import (
 	//"github.com/labstack/gommon/log"
