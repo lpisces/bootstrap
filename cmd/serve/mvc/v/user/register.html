@@ -9,7 +9,8 @@
 				<div class="form-group">
 		    	<label for="inputEmail">Email</label>
 		    	<input type="email" name="email" id="inputEmail" 
-						class="form-control form-control-sm {{if eq true .Checked }} {{if eq "" (index .Error "Email")}}is-valid{{else}}is-invalid{{end}} {{end}}" 
+						class="form-control form-control-sm 
+						{{if eq true .Checked }} {{if eq "" (index .Error "Email")}}is-valid{{else}}is-invalid{{end}} {{end}}" 
 						placeholder="请输入Email" required 
 						value="{{if eq true .Checked}}{{.User.Email}}{{end}}"
 						{{if ne true .Checked}}autofocus="autofocus"{{end}}
@@ -26,11 +27,15 @@
 				</div>
 				<div class="form-group">
 		    	<label for="inputPassword">密码</label>
-		    	<input type="password" name="password" id="inputPassword" class="form-control form-control-sm" placeholder="Password" required>
+		    	<input type="password" name="password" value="" id="inputPassword" class="form-control form-control-sm
+						{{if eq true .Checked }} {{if eq "" (index .Error "Password")}}is-valid{{else}}is-invalid{{end}} {{end}}" 
+					 placeholder="Password" required>
 					<div class="invalid-feedback" id="password-invalid-feedback">
 						{{if .Checked}}
 							{{if ne "" (index .Error "Password")}}
 								{{index .Error "Password"}}
+							{{else}}
+								请输入密码
 							{{end}}
 						{{else}}
 						请输入密码
@@ -39,9 +44,19 @@
 				</div>
 				<div class="form-group">
 		    	<label for="inputPasswordConfirm">确认密码</label>
-		    	<input type="password" name="password_confirm" id="inputPasswordConfirm" class="form-control form-control-sm" placeholder="Password" required>
-					<div class="invalid-feedback">
+		    	<input type="password" name="password_confirm" value="" id="inputPasswordConfirm" class="form-control form-control-sm 
+						{{if eq true .Checked }} {{if eq "" (index .Error "PasswordConfirm")}}is-valid{{else}}is-invalid{{end}} {{end}}" 
+					placeholder="Password" required>
+					<div class="invalid-feedback" id="password-confirm-invalid-feedback">
+						{{if .Checked}}
+							{{if ne "" (index .Error "PasswordConfirm")}}
+								{{index .Error "PasswordConfirm"}}
+							{{else}}
+								请确认密码
+							{{end}}
+						{{else}}
 						请确认密码
+						{{end}}
 					</div>
 				</div>
 				<button type="submit" class="btn btn-primary btn-sm">注册</button>

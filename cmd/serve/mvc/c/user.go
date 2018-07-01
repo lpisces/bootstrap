@@ -56,6 +56,14 @@ func PostRegister(c echo.Context) (err error) {
 		data.Checked = true
 		return c.Render(http.StatusOK, "register", data)
 	}
+
+	if err := user.Create(); err != nil {
+		data.Error = map[string]string{"Email": err.Error()}
+		data.Checked = true
+		log.Info(data.Error)
+		return c.Render(http.StatusOK, "register", data)
+	}
+
 	return c.Redirect(http.StatusMovedPermanently, "/login")
 }
 
