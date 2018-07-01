@@ -1,5 +1,5 @@
 {{define "register"}}
-{{template "header"}}
+{{template "header" .}}
 <div class="container h-100">
 	<div class="row h-100 mt-4 justify-content-sm-center">
 		<div class="col-sm-4 card">
@@ -8,16 +8,33 @@
 		  <form class="needs-validation" method="POST" action="/register" novalidate>
 				<div class="form-group">
 		    	<label for="inputEmail">Email</label>
-		    	<input type="email" name="email" id="inputEmail" class="form-control form-control-sm" placeholder="请输入Email" required autofocus>
-					<div class="invalid-feedback">
+		    	<input type="email" name="email" id="inputEmail" 
+						class="form-control form-control-sm {{if eq true .Checked }} {{if eq "" (index .Error "Email")}}is-valid{{else}}is-invalid{{end}} {{end}}" 
+						placeholder="请输入Email" required 
+						value="{{if eq true .Checked}}{{.User.Email}}{{end}}"
+						{{if ne true .Checked}}autofocus="autofocus"{{end}}
+						{{if and (eq true .Checked) (ne "" (index .Error "Email"))}}autofocus="autofocus"{{end}}>
+					<div class="invalid-feedback" id="email-invalid-feedback">
+						{{if .Checked}}
+							{{if ne "" (index .Error "Email")}}
+								{{index .Error "Email"}}
+							{{end}}
+						{{else}}
 						请输入Email
+						{{end}}
 					</div>
 				</div>
 				<div class="form-group">
 		    	<label for="inputPassword">密码</label>
 		    	<input type="password" name="password" id="inputPassword" class="form-control form-control-sm" placeholder="Password" required>
-					<div class="invalid-feedback">
+					<div class="invalid-feedback" id="password-invalid-feedback">
+						{{if .Checked}}
+							{{if ne "" (index .Error "Password")}}
+								{{index .Error "Password"}}
+							{{end}}
+						{{else}}
 						请输入密码
+						{{end}}
 					</div>
 				</div>
 				<div class="form-group">
@@ -29,7 +46,7 @@
 				</div>
 				<button type="submit" class="btn btn-primary btn-sm">注册</button>
 		  </form>
-			<p class="mt-5 mb-3 text-muted">&copy; {{.SiteConfig.Name}} 2017-2018</p>
+			<p class="mt-5 mb-3 text-muted">&copy; {{.SiteName}} 2017-2018</p>
 			</div>
 		</div>
 	</div>

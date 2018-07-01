@@ -75,7 +75,7 @@ func startSrv() (err error) {
 	e.Use(middleware.Logger())
 	//e.Use(middleware.Recover())
 	e.Use(middleware.Gzip())
-	e.Use(middleware.CSRF())
+	//e.Use(middleware.CSRF())
 
 	// Routes
 	Route(e)
