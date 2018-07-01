@@ -71,6 +71,7 @@ func (u *User) Exist() (exist bool, err error) {
 	uu := &User{}
 	if db.Where("email = ?", u.Email).First(uu).RecordNotFound() {
 		exist = false
+		return
 	}
 	exist = true
 	return

@@ -3,6 +3,7 @@ package m
 import (
 	"fmt"
 	"github.com/lpisces/bootstrap/cmd/serve"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -21,6 +22,12 @@ func TestUserCreate(t *testing.T) {
 		PasswordConfirm: "hellobootstrap",
 	}
 
+	exist, err := u.Exist()
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, exist, false)
+
 	defer func() {
 		db, err := GetDB()
 		if err != nil {
@@ -37,4 +44,11 @@ func TestUserCreate(t *testing.T) {
 	if err := u.Create(); err != nil {
 		t.Fatal(err)
 	}
+
+	exist, err = u.Exist()
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, exist, true)
+
 }
