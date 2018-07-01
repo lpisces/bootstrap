@@ -1,9 +1,11 @@
 package c
 
 import (
+	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/labstack/echo"
 	"github.com/lpisces/bootstrap/cmd/serve"
+	"github.com/lpisces/bootstrap/cmd/serve/mvc/m"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -35,6 +37,47 @@ func TestGetRegister(t *testing.T) {
 		v, exist := doc.Find("input[name=email]").Attr("value")
 		assert.Equal(t, exist, true)
 		assert.Equal(t, v, "")
+	}
+}
+
+func TestPostRegisterSucc(t *testing.T) {
+	// Load default config
+	serve.Conf = serve.DefaultConfig()
+
+	// migrate db
+	if err := m.Migrate(); err != nil {
+		t.Fatal(err)
+	}
+
+	f := make(url.Values)
+	f.Set("email", "iamalazyrat@gmail.com")
+	f.Set("password", "helloworld")
+	f.Set("password_confirm", "helloworld")
+
+	defer func() {
+		db, err := m.GetDB()
+		if err != nil {
+			t.Fatal(err)
+		}
+		db.LogMode(true)
+		u := &m.User{}
+		if db.Where("email = ?", "iamalazyrat@gmail.com").First(u).RecordNotFound() {
+			t.Log(u.ID)
+			t.Fatal(fmt.Errorf("write db failed"))
+		}
+		db.Delete(u)
+	}()
+
+	req := httptest.NewRequest(echo.POST, "/register", strings.NewReader(f.Encode()))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationForm)
+	nr := httptest.NewRecorder()
+
+	e := initTestEcho()
+	ctx := e.NewContext(req, nr)
+
+	// Assertions
+	if assert.NoError(t, PostRegister(ctx)) {
+		assert.Equal(t, http.StatusMovedPermanently, nr.Code)
 	}
 }
 

@@ -2,14 +2,18 @@ package m
 
 import (
 	"fmt"
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/sqlite"
+	//"github.com/jinzhu/gorm"
+	//_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"golang.org/x/crypto/bcrypt"
 	valid "gopkg.in/asaskevich/govalidator.v4"
+	"time"
 )
 
 type User struct {
-	gorm.Model
+	//gorm.Model
+	ID              uint `gorm:"primary_key"`
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
 	Name            string `gorm:"size:255;not null;unique" valid:"length(6|15),optional" form:"name"`
 	Email           string `gorm:"size:255;not null;unique" valid:"required~请输入Email,email~Email格式不正确" form:"email"`
 	Avatar          string `gorm:"size:1024;not null;" valid:"optional,alphanum" form:"avatar"`
@@ -40,7 +44,7 @@ func (u *User) Create() (err error) {
 	}
 
 	uu := &User{}
-	if !db.Where("email = ?", u.Email).First(uu).RecordNotFound() {
+	if !(db.Where("email = ?", u.Email).First(uu).RecordNotFound()) {
 		return fmt.Errorf("%s 已经存在", u.Email)
 	}
 
@@ -51,5 +55,21 @@ func (u *User) Create() (err error) {
 
 	u.PasswrodDigest = string(hash)
 	db.Create(u)
+	return
+}
+
+// Exist
+func (u *User) Exist() (exist bool, err error) {
+
+	db, err := GetDB()
+	if err != nil {
+		return
+	}
+
+	uu := &User{}
+	if db.Where("email = ?", u.Email).First(uu).RecordNotFound() {
+		exist = false
+	}
+	exist = true
 	return
 }
