@@ -17,4 +17,7 @@ func Route(e *echo.Echo) {
 	e.GET("/register", c.GetRegister)
 	e.POST("/register", c.PostRegister)
 
+	// login
+	e.GET("/login", c.GetLogin)
+
 }

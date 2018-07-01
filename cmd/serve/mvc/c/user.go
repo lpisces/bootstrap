@@ -56,5 +56,9 @@ func PostRegister(c echo.Context) (err error) {
 		data.Checked = true
 		return c.Render(http.StatusOK, "register", data)
 	}
+	return c.Redirect(http.StatusMovedPermanently, "/login")
+}
+
+func GetLogin(c echo.Context) (err error) {
 	return c.String(http.StatusOK, "OK")
 }
