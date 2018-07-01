@@ -92,6 +92,8 @@ func startSrv() (err error) {
 
 	if serve.Debug {
 		e.Logger.SetLevel(log.DEBUG)
+	} else {
+		e.Logger.SetLevel(log.ERROR)
 	}
 
 	e.Logger.Infof("http server started on %s:%s in %s model", config.Srv.Host, config.Srv.Port, config.Mode)
