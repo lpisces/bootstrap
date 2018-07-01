@@ -42,6 +42,7 @@ func (u *User) Create() (err error) {
 	if err != nil {
 		return
 	}
+	defer db.Close()
 
 	uu := &User{}
 	if !(db.Where("email = ?", u.Email).First(uu).RecordNotFound()) {
@@ -65,6 +66,7 @@ func (u *User) Exist() (exist bool, err error) {
 	if err != nil {
 		return
 	}
+	defer db.Close()
 
 	uu := &User{}
 	if db.Where("email = ?", u.Email).First(uu).RecordNotFound() {

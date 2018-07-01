@@ -9,9 +9,13 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )
 
+var (
+	DB *gorm.DB
+)
+
 func Migrate() (err error) {
-	config := serve.Conf
-	db, err := gorm.Open(config.DB.Driver, config.DB.DataSource)
+	//config := serve.Conf
+	db, err := GetDB() //gorm.Open(config.DB.Driver, config.DB.DataSource)
 	defer db.Close()
 
 	if err != nil {
@@ -22,7 +26,11 @@ func Migrate() (err error) {
 	return
 }
 
-func GetDB() (db *gorm.DB, err error) {
+func GetDB() (*gorm.DB, error) {
 	config := serve.Conf
-	return gorm.Open(config.DB.Driver, config.DB.DataSource)
+	if DB != nil {
+		return DB, nil
+	}
+	DB, err := gorm.Open(config.DB.Driver, config.DB.DataSource)
+	return DB, err
 }
