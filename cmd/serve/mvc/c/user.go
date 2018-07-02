@@ -128,5 +128,5 @@ func PostLogin(c echo.Context) (err error) {
 		return
 	}
 
-	return c.Redirect(http.StatusMovedPermanently, "/home")
+	return c.Redirect(http.StatusMovedPermanently, "/")
 }

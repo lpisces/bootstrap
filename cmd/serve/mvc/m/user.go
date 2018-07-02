@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo-contrib/session"
+	//"github.com/labstack/gommon/log"
 	"github.com/lpisces/bootstrap/cmd/serve"
 	valid "gopkg.in/asaskevich/govalidator.v4"
 	"time"
@@ -20,7 +21,7 @@ type User struct {
 	Name            string `gorm:"size:255;not null;unique" valid:"length(6|15),optional" form:"name"`
 	Email           string `gorm:"size:255;not null;unique" valid:"required~请输入Email,email~Email格式不正确" form:"email"`
 	Avatar          string `gorm:"size:1024;not null;" valid:"optional,alphanum" form:"avatar"`
-	PasswrodDigest  string `grom:"size:1024;not null;" valid:"-"`
+	PasswordDigest  string `grom:"size:1024;not null;column:password_digest;" valid:"-"`
 	Password        string `gorm:"-" valid:"required~请输入密码,length(6|15)~密码长度必须在6到15位之间" form:"password"`
 	PasswordConfirm string `gorm:"-" valid:"required~请确认密码" form:"password_confirm"`
 }
@@ -52,12 +53,12 @@ func (u *User) Create() (err error) {
 		return fmt.Errorf("%s 已经存在", u.Email)
 	}
 
-	hash, err := Crypt(u.Password) //bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.MinCost)
+	hash, err := HashPassword(u.Password) //bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.MinCost)
 	if err != nil {
 		return
 	}
 
-	u.PasswrodDigest = string(hash)
+	u.PasswordDigest = hash
 	db.Create(u)
 	return
 }
@@ -82,18 +83,6 @@ func (u *User) Exist() (exist bool, err error) {
 
 // Auth
 func (u *User) Auth() (bool, error) {
-	exist, err := u.Exist()
-	if err != nil {
-		return false, err
-	}
-	if !exist {
-		return false, nil
-	}
-
-	hash, err := Crypt(u.Password) //bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.MinCost)
-	if err != nil {
-		return false, err
-	}
 
 	db, err := GetDB()
 	if err != nil {
@@ -101,10 +90,13 @@ func (u *User) Auth() (bool, error) {
 	}
 	defer db.Close()
 
-	if db.Where("password_digest = ?", hash).First(&User{}).RecordNotFound() {
+	if db.Where(&User{Email: u.Email}).First(u).RecordNotFound() {
 		return false, nil
 	}
 
+	if !CheckPasswordHash(u.Password, u.PasswordDigest) {
+		return false, nil
+	}
 	return true, nil
 }
 

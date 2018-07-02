@@ -32,12 +32,25 @@ func GetDB() (*gorm.DB, error) {
 		return DB, nil
 	}
 	DB, err := gorm.Open(config.DB.Driver, config.DB.DataSource)
+	if config.Mode != "production" {
+		DB.LogMode(true)
+	}
 	return DB, err
 }
 
 func Crypt(str string) (hash string, err error) {
-	config := serve.Conf
-	hashByte, err := bcrypt.GenerateFromPassword([]byte(str+config.Secret.Password), bcrypt.MinCost)
+	//config := serve.Conf
+	hashByte, err := bcrypt.GenerateFromPassword([]byte(str), bcrypt.MinCost)
 	hash = string(hashByte)
 	return
+}
+
+func HashPassword(password string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
+	return string(bytes), err
+}
+
+func CheckPasswordHash(password, hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	return err == nil
 }
