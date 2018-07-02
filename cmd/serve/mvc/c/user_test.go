@@ -206,3 +206,54 @@ func TestGetLogin(t *testing.T) {
 		assert.Equal(t, false, strings.Contains(v, "is-invalid"))
 	}
 }
+
+func TestPostLoginFailed(t *testing.T) {
+	// Load default config
+	serve.Conf = serve.DefaultConfig()
+
+	f := make(url.Values)
+	f.Set("email", "iamalazyrat@gmailcom")
+	f.Set("password", "iamalazyrat@gmailcom")
+
+	req := httptest.NewRequest(echo.POST, "/login", strings.NewReader(f.Encode()))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationForm)
+	nr := httptest.NewRecorder()
+
+	e := initTestEcho()
+	ctx := e.NewContext(req, nr)
+
+	// Assertions
+	if assert.NoError(t, PostLogin(ctx)) {
+		assert.Equal(t, http.StatusOK, nr.Code)
+		doc, err := goquery.NewDocumentFromReader(nr.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		// title
+		assert.Equal(t, serve.Conf.Site.Name+"-登录", doc.Find("title").Text())
+
+		// header
+		assert.Equal(t, "登录", doc.Find("h4").Text())
+
+		// email
+		v, exist := doc.Find("input[name=email]").Attr("value")
+		assert.Equal(t, exist, true)
+		assert.Equal(t, "iamalazyrat@gmailcom", v)
+
+		// password
+		v, exist = doc.Find("input[name=password]").Attr("value")
+		assert.Equal(t, exist, true)
+		assert.Equal(t, "", v)
+
+		v, exist = doc.Find("input[name=password]").Attr("class")
+		assert.Equal(t, exist, true)
+		assert.Equal(t, true, strings.Contains(v, "is-invalid"))
+
+		passwordInvalidFeedback := doc.Find("#password-invalid-feedback").Text()
+		passwordInvalidFeedback = strings.Replace(passwordInvalidFeedback, "\n", "", -1)
+		passwordInvalidFeedback = strings.Replace(passwordInvalidFeedback, "\t", "", -1)
+		assert.Equal(t, "邮箱或密码错误", passwordInvalidFeedback)
+	}
+
+}

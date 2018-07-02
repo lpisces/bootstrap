@@ -90,5 +90,43 @@ func GetLogin(c echo.Context) (err error) {
 
 // PostLogin handle login request
 func PostLogin(c echo.Context) (err error) {
+
+	type Data struct {
+		Title    string
+		SiteName string
+		Error    map[string]string
+		User     *m.User
+		Checked  bool
+	}
+
+	data := Data{
+		Title:    serve.Conf.Site.Name + "-" + "登录",
+		SiteName: serve.Conf.Site.Name,
+		Error:    map[string]string{},
+		User:     &m.User{},
+		Checked:  true,
+	}
+
+	user := new(m.User)
+	if err = c.Bind(user); err != nil {
+		return
+	}
+	data.User = user
+
+	ok, err := user.Auth()
+	if err != nil {
+		return err
+	}
+
+	if !ok {
+		data.Error = map[string]string{"Password": "邮箱或密码错误"}
+		log.Info(data.Error)
+		return c.Render(http.StatusOK, "login", data)
+	}
+
+	if err = user.SignIn(c); err != nil {
+		return
+	}
+
 	return c.Redirect(http.StatusMovedPermanently, "/home")
 }
