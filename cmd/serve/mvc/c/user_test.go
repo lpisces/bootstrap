@@ -34,9 +34,24 @@ func TestGetRegister(t *testing.T) {
 			t.Fatal(err)
 		}
 		assert.Equal(t, doc.Find("title").Text(), serve.Conf.Site.Name+"-注册")
+
+		// header
+		assert.Equal(t, "注册", doc.Find("h4").Text())
+
+		// email
 		v, exist := doc.Find("input[name=email]").Attr("value")
-		assert.Equal(t, exist, true)
-		assert.Equal(t, v, "")
+		assert.Equal(t, true, exist)
+		assert.Equal(t, "", v)
+
+		// password
+		v, exist = doc.Find("input[name=password]").Attr("value")
+		assert.Equal(t, true, exist)
+		assert.Equal(t, "", v)
+
+		// password_confirm
+		v, exist = doc.Find("input[name=password_confirm]").Attr("value")
+		assert.Equal(t, true, exist)
+		assert.Equal(t, "", v)
 	}
 }
 
@@ -109,6 +124,9 @@ func TestPostRegisterFailed(t *testing.T) {
 		// title
 		assert.Equal(t, doc.Find("title").Text(), serve.Conf.Site.Name+"-注册")
 
+		// header
+		assert.Equal(t, "注册", doc.Find("h4").Text())
+
 		// email
 		v, exist := doc.Find("input[name=email]").Attr("value")
 		assert.Equal(t, exist, true)
@@ -147,5 +165,44 @@ func TestPostRegisterFailed(t *testing.T) {
 		passwordConfirmInvalidFeedback = strings.Replace(passwordConfirmInvalidFeedback, "\t", "", -1)
 		assert.Equal(t, "两次输入密码不一致", passwordConfirmInvalidFeedback)
 		//t.Fatal(doc.Html())
+	}
+}
+
+func TestGetLogin(t *testing.T) {
+
+	// Load default config
+	serve.Conf = serve.DefaultConfig()
+
+	req := httptest.NewRequest(echo.GET, "/login", nil)
+	nr := httptest.NewRecorder()
+
+	e := initTestEcho()
+	ctx := e.NewContext(req, nr)
+
+	// Assertions
+	if assert.NoError(t, GetLogin(ctx)) {
+		assert.Equal(t, http.StatusOK, nr.Code)
+		doc, err := goquery.NewDocumentFromReader(nr.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		// title
+		assert.Equal(t, serve.Conf.Site.Name+"-登录", doc.Find("title").Text())
+
+		// header
+		assert.Equal(t, "登录", doc.Find("h4").Text())
+
+		// email
+		v, exist := doc.Find("input[name=email]").Attr("value")
+		assert.Equal(t, true, exist)
+		assert.Equal(t, "", v)
+		assert.Equal(t, false, strings.Contains(v, "is-invalid"))
+
+		// password
+		v, exist = doc.Find("input[name=password]").Attr("value")
+		assert.Equal(t, true, exist)
+		assert.Equal(t, "", v)
+		assert.Equal(t, false, strings.Contains(v, "is-invalid"))
 	}
 }

@@ -11,10 +11,11 @@ var (
 
 // Config app config
 type Config struct {
-	Mode string
-	DB   *DBConfig
-	Srv  *SrvConfig
-	Site *SiteConfig
+	Mode   string
+	DB     *DBConfig
+	Srv    *SrvConfig
+	Site   *SiteConfig
+	Secret *SecretConfig
 }
 
 // DBConfig database config
@@ -31,8 +32,14 @@ type SrvConfig struct {
 
 // SiteConfig site config
 type SiteConfig struct {
-	Name    string
-	BaseURL string
+	Name        string
+	BaseURL     string
+	SessionName string
+}
+
+type SecretConfig struct {
+	Session  string
+	Password string
 }
 
 // DefaultConfig get default config
@@ -49,11 +56,17 @@ func DefaultConfig() (config *Config) {
 	site := &SiteConfig{}
 	site.Name = "Bootstrap"
 	site.BaseURL = "http://127.0.0.1/"
+	site.SessionName = "bs_sess"
+
+	secret := &SecretConfig{}
+	secret.Session = "secret"
+	secret.Password = "secret"
 
 	config.Mode = "development"
 	config.DB = db
 	config.Srv = srv
 	config.Site = site
+	config.Secret = secret
 	return
 }
 
@@ -98,11 +111,27 @@ func (config *Config) Load(path string) (err error) {
 	if site.BaseURL == "" {
 		site.BaseURL = config.Site.BaseURL
 	}
+	site.SessionName = cfg.Section("site").Key("session_name").String()
+	if site.SessionName == "" {
+		site.SessionName = config.Site.SessionName
+	}
+
+	// secret
+	secret := &SecretConfig{}
+	secret.Session = cfg.Section("secret").Key("session").String()
+	if secret.Session == "" {
+		secret.Session = config.Secret.Session
+	}
+	secret.Password = cfg.Section("secret").Key("password").String()
+	if secret.Password == "" {
+		secret.Password = config.Secret.Password
+	}
 
 	config.Mode = mode
 	config.DB = db
 	config.Srv = srv
 	config.Site = site
+	config.Secret = secret
 
 	return
 }

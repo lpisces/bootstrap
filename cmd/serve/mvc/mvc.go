@@ -3,7 +3,9 @@ package mvc
 import (
 	"fmt"
 	"github.com/gobuffalo/packr"
+	"github.com/gorilla/sessions"
 	"github.com/labstack/echo"
+	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/middleware"
 	"github.com/labstack/gommon/log"
 	"github.com/lpisces/bootstrap/cmd/serve"
@@ -76,6 +78,7 @@ func startSrv() (err error) {
 	//e.Use(middleware.Recover())
 	e.Use(middleware.Gzip())
 	//e.Use(middleware.CSRF())
+	e.Use(session.Middleware(sessions.NewCookieStore([]byte(config.Secret.Session))))
 
 	// Routes
 	Route(e)
@@ -87,7 +90,6 @@ func startSrv() (err error) {
 	}
 
 	e.Listener = l
-
 	e.HideBanner = true
 
 	if serve.Debug {

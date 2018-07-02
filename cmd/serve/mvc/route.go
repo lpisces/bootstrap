@@ -8,7 +8,7 @@ import (
 func Route(e *echo.Echo) {
 
 	// home
-	e.GET("/", c.HomeHandler)
+	e.GET("/", c.GetHome)
 
 	// hello
 	e.GET("/hello", c.HelloHandler)
@@ -19,5 +19,6 @@ func Route(e *echo.Echo) {
 
 	// login
 	e.GET("/login", c.GetLogin)
+	e.POST("/login", c.PostLogin)
 
 }

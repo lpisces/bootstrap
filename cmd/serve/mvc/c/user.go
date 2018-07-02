@@ -67,6 +67,28 @@ func PostRegister(c echo.Context) (err error) {
 	return c.Redirect(http.StatusMovedPermanently, "/login")
 }
 
+// GetLogin login page
 func GetLogin(c echo.Context) (err error) {
-	return c.String(http.StatusOK, "OK")
+	type Data struct {
+		Title    string
+		SiteName string
+		Error    map[string]string
+		User     *m.User
+		Checked  bool
+	}
+
+	data := Data{
+		Title:    serve.Conf.Site.Name + "-" + "登录",
+		SiteName: serve.Conf.Site.Name,
+		Error:    map[string]string{},
+		User:     &m.User{},
+		Checked:  false,
+	}
+
+	return c.Render(http.StatusOK, "login", data)
+}
+
+// PostLogin handle login request
+func PostLogin(c echo.Context) (err error) {
+	return c.Redirect(http.StatusMovedPermanently, "/home")
 }

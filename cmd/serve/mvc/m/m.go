@@ -2,11 +2,11 @@ package m
 
 import (
 	//"github.com/labstack/gommon/log"
-	"github.com/lpisces/bootstrap/cmd/serve"
-
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
+	"github.com/lpisces/bootstrap/cmd/serve"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var (
@@ -33,4 +33,11 @@ func GetDB() (*gorm.DB, error) {
 	}
 	DB, err := gorm.Open(config.DB.Driver, config.DB.DataSource)
 	return DB, err
+}
+
+func Crypt(str string) (hash string, err error) {
+	config := serve.Conf
+	hashByte, err := bcrypt.GenerateFromPassword([]byte(str+config.Secret.Password), bcrypt.MinCost)
+	hash = string(hashByte)
+	return
 }
