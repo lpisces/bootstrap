@@ -10,15 +10,4 @@ func Route(e *echo.Echo) {
 	// home
 	e.GET("/", c.GetHome)
 
-	// hello
-	e.GET("/hello", c.HelloHandler)
-
-	// register
-	e.GET("/register", c.GetRegister)
-	e.POST("/register", c.PostRegister)
-
-	// login
-	e.GET("/login", c.GetLogin)
-	e.POST("/login", c.PostLogin)
-
 }
