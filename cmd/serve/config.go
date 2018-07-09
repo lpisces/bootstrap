@@ -85,7 +85,7 @@ func (config *Config) Load(path string) (err error) {
 	// database
 	db := &DBConfig{}
 	db.Driver = cfg.Section("db").Key("driver").In("sqlite3", []string{"sqlite3", "mysql"})
-	db.DataSource = cfg.Section("db").Key("dataSource").String()
+	db.DataSource = cfg.Section("db").Key("source").String()
 	if db.DataSource == "" {
 		db.DataSource = config.DB.DataSource
 	}
