@@ -1,0 +1,5 @@
+p, admin, /*, *, allow
+p, member, /*, *, allow
+p, anonymous, /*, *, allow
+p, member, /admin/*, *, deny
+p, anonymous, /admin/*, *, deny

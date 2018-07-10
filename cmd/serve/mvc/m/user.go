@@ -2,8 +2,6 @@ package m
 
 import (
 	"fmt"
-	//"github.com/jinzhu/gorm"
-	//_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo-contrib/session"
@@ -24,6 +22,7 @@ type User struct {
 	PasswordDigest  string `grom:"size:1024;not null;column:password_digest;" valid:"-"`
 	Password        string `gorm:"-" valid:"required~请输入密码,length(6|15)~密码长度必须在6到15位之间" form:"password"`
 	PasswordConfirm string `gorm:"-" valid:"required~请确认密码" form:"password_confirm"`
+	Admin           bool   `gorm:"not null;default:false;" valid:"optional"`
 }
 
 // Validate
@@ -136,4 +135,9 @@ func (u *User) SignOut(c echo.Context) (err error) {
 	delete(sess.Values, "uid")
 	sess.Save(c.Request(), c.Response())
 	return
+}
+
+// IsAdmin
+func (u *User) IsAdmin() (ok bool) {
+	return u.Admin || u.ID == 1
 }

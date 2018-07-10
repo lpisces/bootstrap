@@ -11,6 +11,10 @@ import (
 // GetRegister register page
 func GetRegister(c echo.Context) (err error) {
 
+	if _, err := CurrentUser(c); err == nil {
+		return c.Redirect(http.StatusFound, "/")
+	}
+
 	type Data struct {
 		Title    string
 		SiteName string
@@ -49,6 +53,7 @@ func PostRegister(c echo.Context) (err error) {
 	if err = c.Bind(user); err != nil {
 		return
 	}
+
 	data.User = user
 	if ok, errs := user.Validate(); !ok {
 		log.Info(errs)
@@ -69,6 +74,11 @@ func PostRegister(c echo.Context) (err error) {
 
 // GetLogin login page
 func GetLogin(c echo.Context) (err error) {
+
+	if _, err := CurrentUser(c); err == nil {
+		return c.Redirect(http.StatusFound, "/")
+	}
+
 	type Data struct {
 		Title    string
 		SiteName string
@@ -128,5 +138,5 @@ func PostLogin(c echo.Context) (err error) {
 		return
 	}
 
-	return c.Redirect(http.StatusMovedPermanently, "/")
+	return c.Redirect(http.StatusFound, "/")
 }

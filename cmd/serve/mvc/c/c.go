@@ -1,18 +1,23 @@
 package c
 
 import (
-	//"github.com/gorilla/sessions"
 	"fmt"
+	"github.com/gorilla/sessions"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/lpisces/bootstrap/cmd/serve"
 	"github.com/lpisces/bootstrap/cmd/serve/mvc/m"
 )
 
+// GetSession
+func GetSession(c echo.Context) (sess *sessions.Session, err error) {
+	siteConfig := serve.Conf.Site
+	return session.Get(siteConfig.SessionName, c)
+}
+
 // IsLogin
 func IsLogin(c echo.Context) (ok bool, err error) {
-	siteConfig := serve.Conf.Site
-	sess, err := session.Get(siteConfig.SessionName, c)
+	sess, err := GetSession(c)
 	if err != nil {
 		return false, err
 	}
@@ -24,17 +29,14 @@ func IsLogin(c echo.Context) (ok bool, err error) {
 // CurrentUser
 func CurrentUser(c echo.Context) (user *m.User, err error) {
 
-	user = &m.User{}
-
-	siteConfig := serve.Conf.Site
-	sess, err := session.Get(siteConfig.SessionName, c)
+	sess, err := GetSession(c)
 	if err != nil {
 		return user, err
 	}
 
 	uid, ok := sess.Values["uid"]
 	if !ok {
-		err = fmt.Errorf("not signed in")
+		err = fmt.Errorf("uid not found")
 		return
 	}
 
@@ -44,7 +46,10 @@ func CurrentUser(c echo.Context) (user *m.User, err error) {
 	}
 	defer db.Close()
 
-	db.First(user, uid)
+	user = &m.User{}
+	if db.First(user, uid).RecordNotFound() {
+		err = fmt.Errorf("user not found")
+		return
+	}
 	return
-
 }

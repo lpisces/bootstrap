@@ -10,6 +10,7 @@ import (
 	"github.com/labstack/gommon/log"
 	"github.com/lpisces/bootstrap/cmd/serve"
 	"github.com/lpisces/bootstrap/cmd/serve/mvc/m"
+	"github.com/lpisces/bootstrap/cmd/serve/mw"
 	"gopkg.in/urfave/cli.v1"
 	"html/template"
 	"net"
@@ -71,6 +72,7 @@ func startSrv() (err error) {
 		publicBox := packr.NewBox("../../../public")
 		assetHandler := http.FileServer(publicBox)
 		e.GET("/public/*", echo.WrapHandler(http.StripPrefix("/public/", assetHandler)))
+		e.GET("/favicon.ico", echo.WrapHandler(http.StripPrefix("/", assetHandler)))
 	}
 
 	// Middleware
@@ -79,6 +81,7 @@ func startSrv() (err error) {
 	e.Use(middleware.Gzip())
 	//e.Use(middleware.CSRF())
 	e.Use(session.Middleware(sessions.NewCookieStore([]byte(config.Secret.Session))))
+	e.Use(mw.CasbinAuth)
 
 	// Routes
 	Route(e)
