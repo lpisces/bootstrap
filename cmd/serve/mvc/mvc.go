@@ -20,102 +20,105 @@ import (
 	"strings"
 )
 
-// serve start web server
-func startSrv() (err error) {
+// Run run app
+func Run(c *cli.Context) (err error) {
 
-	// migrate db
-	if err := m.Migrate(); err != nil {
-		log.Fatal(err)
+	// init config
+	if err = InitConfig(c); err != nil {
+		return
 	}
 
+	// init db
+	if err = InitDB(); err != nil {
+		return
+	}
+
+	// start server
+	if err = startSrv(); err != nil {
+		return
+	}
+
+	return
+}
+
+// serve start web server
+func startSrv() (err error) {
 	// get config
 	config := serve.Conf
 
-	// new echo instance
-	e := echo.New()
-
-	// set template render
-	viewPath := "cmd/serve/mvc/v"
-	box := packr.NewBox("./v")
-	templates := template.New("")
-
-	if _, err := os.Stat(viewPath); err == nil {
-		err = filepath.Walk(viewPath, func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-			if !info.IsDir() {
-				relativePath := strings.Replace(path, viewPath+"/", "", 1)
-				//log.Info(box.String(relativePath))
-				_, err := templates.Parse(box.String(relativePath))
-				if err != nil {
-					return err
-				}
-			}
-			return nil
-		})
-		if err != nil {
-			e.Logger.Fatal(err)
-		}
-	}
-
-	t := &Template{
-		templates: templates,
-	}
-	e.Renderer = t
-
-	// public
-	//e.Static("/public", "public")
-	//staticPath := "public"
-
-	if _, err := os.Stat("public"); err == nil {
-		publicBox := packr.NewBox("../../../public")
-		assetHandler := http.FileServer(publicBox)
-		e.GET("/public/*", echo.WrapHandler(http.StripPrefix("/public/", assetHandler)))
-		e.GET("/favicon.ico", echo.WrapHandler(http.StripPrefix("/", assetHandler)))
-	}
-
-	// Middleware
-	e.Use(middleware.Logger())
-	//e.Use(middleware.Recover())
-	e.Use(middleware.Gzip())
-	//e.Use(middleware.CSRF())
-	e.Use(session.Middleware(sessions.NewCookieStore([]byte(config.Secret.Session))))
-	e.Use(mw.CasbinAuth)
-
-	// Routes
-	Route(e)
-
-	// Start server
-	l, err := net.Listen("tcp", fmt.Sprintf("%s:%s", config.Srv.Host, config.Srv.Port))
+	// init echo instance
+	e, err := InitEcho()
 	if err != nil {
 		return err
 	}
 
-	e.Listener = l
-	e.HideBanner = true
-
-	if serve.Debug {
-		e.Logger.SetLevel(log.DEBUG)
-	} else {
-		e.Logger.SetLevel(log.ERROR)
+	// set template render, use packr if not development mode
+	t, err := InitTemplate("cmd/serve/mvc/v")
+	if err != nil {
+		return
 	}
+	e.Renderer = t
+
+	// static file
+	if err := InitStaticServer(e, "public"); err != nil {
+		return err
+	}
+
+	// Routes
+	Route(e)
 
 	e.Logger.Infof("http server started on %s:%s in %s model", config.Srv.Host, config.Srv.Port, config.Mode)
 	e.Logger.Fatal(e.Start(""))
 	return
 }
 
-func Run(c *cli.Context) (err error) {
+// InitEcho create echo instance
+func InitEcho() (e *echo.Echo, err error) {
+	// get config
+	config := serve.Conf
 
+	// new echo instance
+	e = echo.New()
+
+	// log
+	if serve.Debug {
+		e.Logger.SetLevel(log.DEBUG)
+	} else {
+		e.Logger.SetLevel(log.ERROR)
+	}
+
+	// Middleware
+	e.Use(middleware.Logger())
+	if !serve.Debug {
+		e.Use(middleware.Recover())
+	}
+	e.Use(middleware.Gzip())
+	//e.Use(middleware.CSRF())
+	e.Use(session.Middleware(sessions.NewCookieStore([]byte(config.Secret.Session))))
+	e.Use(mw.CasbinAuth)
+
+	// Start server
+	l, err := net.Listen("tcp", fmt.Sprintf("%s:%s", config.Srv.Host, config.Srv.Port))
+	if err != nil {
+		return e, err
+	}
+
+	e.Listener = l
+	e.HideBanner = true
+
+	return
+}
+
+// InitConfig init config related var
+func InitConfig(c *cli.Context) (err error) {
 	// Load default config
 	config := serve.DefaultConfig()
 
-	// override default config
-	configFilePath := c.String("config")
-	if configFilePath != "" {
-		if err := config.Load(configFilePath); err != nil {
-			log.Fatal(err)
+	// ini config file override default config
+	configFile := c.String("config")
+	if configFile != "" {
+		if err := config.Load(configFile); err != nil {
+			return err
 		}
 	}
 
@@ -142,10 +145,69 @@ func Run(c *cli.Context) (err error) {
 		serve.Debug = true
 	}
 
-	// start server
-	err = startSrv()
-	if err != nil {
-		log.Fatal(err)
+	return
+}
+
+// InitDB run db migration
+func InitDB() (err error) {
+	// migrate db
+	if err = m.Migrate(); err != nil {
+		return
+	}
+	return
+}
+
+// InitTemplate
+func InitTemplate(path string) (t *Template, err error) {
+	// set template render, use packr if not development mode
+	templates := template.New("")
+	if !serve.Debug {
+		viewPath := path
+		box := packr.NewBox("./v")
+
+		if _, err := os.Stat(viewPath); err == nil {
+			err = filepath.Walk(viewPath, func(path string, info os.FileInfo, err error) error {
+				if err != nil {
+					return err
+				}
+				if !info.IsDir() {
+					relativePath := strings.Replace(path, viewPath+"/", "", 1)
+					_, err := templates.Parse(box.String(relativePath))
+					if err != nil {
+						return err
+					}
+				}
+				return nil
+			})
+			if err != nil {
+				//e.Logger.Fatal(err)
+				return nil, err
+			}
+		}
+	} else {
+		templates = template.Must(template.ParseGlob(path + "/*.html"))
+	}
+
+	t = &Template{
+		templates: templates,
+	}
+	return
+}
+
+func InitStaticServer(e *echo.Echo, path string) (err error) {
+	// static file serve, use packr if not development
+	if serve.Debug {
+		e.Static("/public", path)
+		e.File("/favicon.ico", path+"/favicon.ico")
+	} else {
+		if _, err := os.Stat(path); err == nil {
+			publicBox := packr.NewBox("../../../" + path)
+			assetHandler := http.FileServer(publicBox)
+			e.GET("/public/*", echo.WrapHandler(http.StripPrefix("/public/", assetHandler)))
+			e.GET("/favicon.ico", echo.WrapHandler(http.StripPrefix("/", assetHandler)))
+		} else {
+			return err
+		}
 	}
 	return
 }
