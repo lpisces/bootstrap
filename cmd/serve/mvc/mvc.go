@@ -10,7 +10,7 @@ import (
 	"github.com/labstack/gommon/log"
 	"github.com/lpisces/bootstrap/cmd/serve"
 	"github.com/lpisces/bootstrap/cmd/serve/mvc/m"
-	"github.com/lpisces/bootstrap/cmd/serve/mw"
+	//"github.com/lpisces/bootstrap/cmd/serve/mw"
 	"gopkg.in/urfave/cli.v1"
 	"html/template"
 	"net"
@@ -67,7 +67,7 @@ func startSrv() (err error) {
 	// Routes
 	Route(e)
 
-	e.Logger.Infof("http server started on %s:%s in %s model", config.Srv.Host, config.Srv.Port, config.Mode)
+	e.Logger.Infof("http server started on %s:%s in %s mode", config.Srv.Host, config.Srv.Port, config.Mode)
 	e.Logger.Fatal(e.Start(""))
 	return
 }
@@ -95,7 +95,7 @@ func InitEcho() (e *echo.Echo, err error) {
 	e.Use(middleware.Gzip())
 	//e.Use(middleware.CSRF())
 	e.Use(session.Middleware(sessions.NewCookieStore([]byte(config.Secret.Session))))
-	e.Use(mw.CasbinAuth)
+	//e.Use(mw.CasbinAuth)
 
 	// Start server
 	l, err := net.Listen("tcp", fmt.Sprintf("%s:%s", config.Srv.Host, config.Srv.Port))
@@ -112,7 +112,7 @@ func InitEcho() (e *echo.Echo, err error) {
 // InitConfig init config related var
 func InitConfig(c *cli.Context) (err error) {
 	// Load default config
-	config := serve.DefaultConfig()
+	config := serve.Conf
 
 	// ini config file override default config
 	configFile := c.String("config")
@@ -161,31 +161,34 @@ func InitDB() (err error) {
 func InitTemplate(path string) (t *Template, err error) {
 	// set template render, use packr if not development mode
 	templates := template.New("")
-	if !serve.Debug {
-		viewPath := path
-		box := packr.NewBox("./v")
+	viewPath := path
+	box := packr.NewBox("./v")
 
-		if _, err := os.Stat(viewPath); err == nil {
-			err = filepath.Walk(viewPath, func(path string, info os.FileInfo, err error) error {
-				if err != nil {
-					return err
-				}
-				if !info.IsDir() {
-					relativePath := strings.Replace(path, viewPath+"/", "", 1)
+	if _, err := os.Stat(viewPath); err == nil {
+		err = filepath.Walk(viewPath, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if !info.IsDir() {
+				relativePath := strings.Replace(path, viewPath+"/", "", 1)
+				if serve.Embed {
 					_, err := templates.Parse(box.String(relativePath))
 					if err != nil {
 						return err
 					}
+				} else {
+					_, err := templates.ParseGlob(path)
+					if err != nil {
+						return err
+					}
 				}
-				return nil
-			})
-			if err != nil {
-				//e.Logger.Fatal(err)
-				return nil, err
 			}
+			return nil
+		})
+		if err != nil {
+			//e.Logger.Fatal(err)
+			return nil, err
 		}
-	} else {
-		templates = template.Must(template.ParseGlob(path + "/*.html"))
 	}
 
 	t = &Template{
@@ -196,7 +199,7 @@ func InitTemplate(path string) (t *Template, err error) {
 
 func InitStaticServer(e *echo.Echo, path string) (err error) {
 	// static file serve, use packr if not development
-	if serve.Debug {
+	if !serve.Embed {
 		e.Static("/public", path)
 		e.File("/favicon.ico", path+"/favicon.ico")
 	} else {

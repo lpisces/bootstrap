@@ -8,6 +8,7 @@ import (
 )
 
 func TestUserCreate(t *testing.T) {
+
 	// Load default config
 	serve.Conf = serve.DefaultConfig()
 

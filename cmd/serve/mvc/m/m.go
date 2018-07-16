@@ -22,7 +22,7 @@ func Migrate() (err error) {
 		return err
 	}
 
-	db.AutoMigrate(&User{})
+	db.AutoMigrate(&User{}, &Token{})
 	return
 }
 

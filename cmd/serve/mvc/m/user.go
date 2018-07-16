@@ -57,8 +57,11 @@ func (u *User) Create() (err error) {
 		return
 	}
 
+	u.Name = u.Email
 	u.PasswordDigest = hash
 	db.Create(u)
+
+	NewToken(TypeActivate, u)
 	return
 }
 

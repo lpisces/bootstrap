@@ -7,66 +7,97 @@ import (
 var (
 	Conf  *Config
 	Debug bool
+	Embed bool
 )
 
-// Config app config
-type Config struct {
-	Mode   string
-	DB     *DBConfig
-	Srv    *SrvConfig
-	Site   *SiteConfig
-	Secret *SecretConfig
-}
+type (
+	// Config app config
+	Config struct {
+		Mode   string
+		DB     *DBConfig
+		Srv    *SrvConfig
+		Site   *SiteConfig
+		Secret *SecretConfig
+		Mail   *MailConfig
+	}
 
-// DBConfig database config
-type DBConfig struct {
-	Driver     string
-	DataSource string
-}
+	// MailConfig
+	MailConfig struct {
+		Hostname string
+		Port     string
+		Username string
+		Password string
+	}
 
-// SrvConfig server config
-type SrvConfig struct {
-	Host string
-	Port string
-}
+	// DBConfig database config
+	DBConfig struct {
+		Driver     string
+		DataSource string
+	}
 
-// SiteConfig site config
-type SiteConfig struct {
-	Name        string
-	BaseURL     string
-	SessionName string
-}
+	// SrvConfig server config
+	SrvConfig struct {
+		Host string
+		Port string
+	}
 
-type SecretConfig struct {
-	Session  string
-	Password string
+	// SiteConfig site config
+	SiteConfig struct {
+		Name        string
+		BaseURL     string
+		SessionName string
+	}
+
+	SecretConfig struct {
+		Session  string
+		Password string
+	}
+)
+
+func init() {
+	Conf = DefaultConfig()
+	Embed = false
 }
 
 // DefaultConfig get default config
 func DefaultConfig() (config *Config) {
-	config = &Config{}
-	db := &DBConfig{}
-	db.Driver = "sqlite3"
-	db.DataSource = "./bootstrap.db"
 
-	srv := &SrvConfig{}
-	srv.Host = "0.0.0.0"
-	srv.Port = "1323"
+	db := &DBConfig{
+		Driver:     "sqlite3",
+		DataSource: "./bootstrap.db",
+	}
 
-	site := &SiteConfig{}
-	site.Name = "Bootstrap"
-	site.BaseURL = "http://127.0.0.1/"
-	site.SessionName = "bs_sess"
+	srv := &SrvConfig{
+		Host: "0.0.0.0",
+		Port: "1323",
+	}
 
-	secret := &SecretConfig{}
-	secret.Session = "secret"
-	secret.Password = "secret"
+	site := &SiteConfig{
+		Name:        "Bootstrap",
+		BaseURL:     "http://127.0.0.1/",
+		SessionName: "bs_sess",
+	}
 
-	config.Mode = "development"
-	config.DB = db
-	config.Srv = srv
-	config.Site = site
-	config.Secret = secret
+	secret := &SecretConfig{
+		Session:  "secret",
+		Password: "secret",
+	}
+
+	mail := &MailConfig{
+		Hostname: "",
+		Port:     "",
+		Username: "",
+		Password: "",
+	}
+
+	config = &Config{
+		Mode:   "development",
+		DB:     db,
+		Srv:    srv,
+		Site:   site,
+		Secret: secret,
+		Mail:   mail,
+	}
 	return
 }
 
@@ -127,11 +158,31 @@ func (config *Config) Load(path string) (err error) {
 		secret.Password = config.Secret.Password
 	}
 
+	// mail
+	mail := &MailConfig{}
+	mail.Hostname = cfg.Section("mail").Key("hostname").String()
+	if mail.Hostname == "" {
+		mail.Hostname = config.Mail.Hostname
+	}
+	mail.Port = cfg.Section("mail").Key("port").String()
+	if mail.Port == "" {
+		mail.Port = config.Mail.Port
+	}
+	mail.Username = cfg.Section("mail").Key("username").String()
+	if mail.Username == "" {
+		mail.Username = config.Mail.Username
+	}
+	mail.Password = cfg.Section("mail").Key("password").String()
+	if mail.Password == "" {
+		mail.Password = config.Mail.Password
+	}
+
 	config.Mode = mode
 	config.DB = db
 	config.Srv = srv
 	config.Site = site
 	config.Secret = secret
+	config.Mail = mail
 
 	return
 }

@@ -11,9 +11,7 @@ func Route(e *echo.Echo) {
 	e.GET("/", c.GetHome)
 
 	// hello
-	e.GET("/hello", c.HelloHandler)
-
-	e.GET("/admin", c.HelloHandler)
+	e.GET("/admin", c.GetAdmin)
 
 	// register
 	e.GET("/register", c.GetRegister)
@@ -22,5 +20,12 @@ func Route(e *echo.Echo) {
 	// login
 	e.GET("/login", c.GetLogin)
 	e.POST("/login", c.PostLogin)
+
+	// logout
+	e.GET("/logout", c.GetLogout)
+
+	// forget_password
+	e.GET("forget_password", c.GetForgetPassword)
+	e.POST("forget_password", c.PostForgetPassword)
 
 }
