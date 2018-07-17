@@ -1,6 +1,7 @@
 package serve
 
 import (
+	//"github.com/labstack/gommon/log"
 	"gopkg.in/ini.v1"
 )
 
@@ -18,15 +19,17 @@ type (
 		Srv    *SrvConfig
 		Site   *SiteConfig
 		Secret *SecretConfig
-		Mail   *MailConfig
+		SMTP   *SMTPConfig
 	}
 
-	// MailConfig
-	MailConfig struct {
+	// SMTPConfig
+	SMTPConfig struct {
 		Hostname string
 		Port     string
 		Username string
 		Password string
+		FromAddr string
+		FromName string
 	}
 
 	// DBConfig database config
@@ -83,11 +86,13 @@ func DefaultConfig() (config *Config) {
 		Password: "secret",
 	}
 
-	mail := &MailConfig{
+	smtp := &SMTPConfig{
 		Hostname: "",
 		Port:     "",
 		Username: "",
 		Password: "",
+		FromAddr: "",
+		FromName: "",
 	}
 
 	config = &Config{
@@ -96,7 +101,7 @@ func DefaultConfig() (config *Config) {
 		Srv:    srv,
 		Site:   site,
 		Secret: secret,
-		Mail:   mail,
+		SMTP:   smtp,
 	}
 	return
 }
@@ -158,23 +163,31 @@ func (config *Config) Load(path string) (err error) {
 		secret.Password = config.Secret.Password
 	}
 
-	// mail
-	mail := &MailConfig{}
-	mail.Hostname = cfg.Section("mail").Key("hostname").String()
-	if mail.Hostname == "" {
-		mail.Hostname = config.Mail.Hostname
+	// smtp
+	smtp := &SMTPConfig{}
+	smtp.Hostname = cfg.Section("smtp").Key("hostname").String()
+	if smtp.Hostname == "" {
+		smtp.Hostname = config.SMTP.Hostname
 	}
-	mail.Port = cfg.Section("mail").Key("port").String()
-	if mail.Port == "" {
-		mail.Port = config.Mail.Port
+	smtp.Port = cfg.Section("smtp").Key("port").String()
+	if smtp.Port == "" {
+		smtp.Port = config.SMTP.Port
 	}
-	mail.Username = cfg.Section("mail").Key("username").String()
-	if mail.Username == "" {
-		mail.Username = config.Mail.Username
+	smtp.Username = cfg.Section("smtp").Key("username").String()
+	if smtp.Username == "" {
+		smtp.Username = config.SMTP.Username
 	}
-	mail.Password = cfg.Section("mail").Key("password").String()
-	if mail.Password == "" {
-		mail.Password = config.Mail.Password
+	smtp.Password = cfg.Section("smtp").Key("password").String()
+	if smtp.Password == "" {
+		smtp.Password = config.SMTP.Password
+	}
+	smtp.FromAddr = cfg.Section("smtp").Key("from_addr").String()
+	if smtp.FromAddr == "" {
+		smtp.FromAddr = config.SMTP.FromAddr
+	}
+	smtp.FromName = cfg.Section("smtp").Key("from_name").String()
+	if smtp.FromName == "" {
+		smtp.FromName = config.SMTP.FromName
 	}
 
 	config.Mode = mode
@@ -182,7 +195,7 @@ func (config *Config) Load(path string) (err error) {
 	config.Srv = srv
 	config.Site = site
 	config.Secret = secret
-	config.Mail = mail
+	config.SMTP = smtp
 
 	return
 }

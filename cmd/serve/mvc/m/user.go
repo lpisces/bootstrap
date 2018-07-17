@@ -6,8 +6,10 @@ import (
 	"github.com/labstack/echo"
 	"github.com/labstack/echo-contrib/session"
 	//"github.com/labstack/gommon/log"
+	"bytes"
 	"github.com/lpisces/bootstrap/cmd/serve"
 	valid "gopkg.in/asaskevich/govalidator.v4"
+	"html/template"
 	"time"
 )
 
@@ -23,6 +25,7 @@ type User struct {
 	Password        string `gorm:"-" valid:"required~请输入密码,length(6|15)~密码长度必须在6到15位之间" form:"password"`
 	PasswordConfirm string `gorm:"-" valid:"required~请确认密码" form:"password_confirm"`
 	Admin           bool   `gorm:"not null;default:false;" valid:"optional"`
+	Activated       bool   `gorm:"not null;default:false;" valid:"optional"`
 }
 
 // Validate
@@ -61,7 +64,7 @@ func (u *User) Create() (err error) {
 	u.PasswordDigest = hash
 	db.Create(u)
 
-	NewToken(TypeActivate, u)
+	NewToken(TokenTypeActivate, u)
 	return
 }
 
@@ -140,7 +143,81 @@ func (u *User) SignOut(c echo.Context) (err error) {
 	return
 }
 
+// LastActivateToken
+func (u *User) LastActivateToken() (t *Token, err error) {
+
+	db, err := GetDB()
+	if err != nil {
+		return t, err
+	}
+	defer db.Close()
+
+	t = &Token{}
+	if db.Where("user_id = ?", u.ID).Where("type = ?", TokenTypeActivate).First(t).RecordNotFound() {
+		err = fmt.Errorf("no activate token found")
+	}
+	return
+}
+
 // IsAdmin
 func (u *User) IsAdmin() (ok bool) {
 	return u.Admin || u.ID == 1
+}
+
+// SendActivateMail
+func (u *User) SendActivateMail() (err error) {
+
+	tmpl := template.Must(template.ParseGlob("cmd/serve/mvc/v/mail/*.html"))
+	token, err := u.LastActivateToken()
+	if err != nil {
+		return err
+	}
+
+	data := struct {
+		User     *User
+		Token    *Token
+		Title    string
+		SiteName string
+		BaseURL  string
+	}{
+		User:     u,
+		Token:    token,
+		Title:    serve.Conf.Site.Name + "-" + "注册激活邮件",
+		SiteName: serve.Conf.Site.Name,
+		BaseURL:  serve.Conf.Site.BaseURL,
+	}
+
+	var mailHTML bytes.Buffer
+	if err := tmpl.Execute(&mailHTML, data); err != nil {
+		return err
+	}
+
+	config := serve.Conf.SMTP
+	mail := &MailData{
+		To:      []string{u.Email},
+		From:    fmt.Sprintf("%s <%s>", config.FromName, config.FromAddr),
+		Subject: fmt.Sprintf("[%s]注册激活邮件", serve.Conf.Site.Name),
+		//Text:    []byte("activate mail"),
+		HTML: mailHTML.Bytes(),
+	}
+	return SendMail(mail)
+}
+
+// SendForgetPasswordMail
+func (u *User) SendForgetPasswordMail() (err error) {
+	return
+}
+
+// Activate
+func (u *User) Activate() (err error) {
+	db, err := GetDB()
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	u.Activated = true
+
+	db.Save(u)
+	return
 }

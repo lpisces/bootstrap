@@ -145,6 +145,8 @@ func InitConfig(c *cli.Context) (err error) {
 		serve.Debug = true
 	}
 
+	log.Info(serve.Conf.SMTP)
+
 	return
 }
 

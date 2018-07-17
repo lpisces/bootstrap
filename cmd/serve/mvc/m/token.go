@@ -7,15 +7,15 @@ import (
 )
 
 const (
-	TypeActivate      = TokenType(1)
-	TypeResetPassword = TokenType(2)
-	TypeMin           = TokenType(1)
-	TypeMax           = TokenType(2)
+	TokenTypeActivate      = TokenType(1)
+	TokenTypeResetPassword = TokenType(2)
+	TokenTypeMin           = TokenType(1)
+	TokenTypeMax           = TokenType(2)
 
-	StatusValid   = TokenStatus(1)
-	StatusInvalid = TokenStatus(2)
-	StatusMin     = TokenStatus(1)
-	StatusMax     = TokenStatus(2)
+	TokenStatusValid   = TokenStatus(1)
+	TokenStatusInvalid = TokenStatus(2)
+	TokenStatusMin     = TokenStatus(1)
+	TokenStatusMax     = TokenStatus(2)
 
 	TokenSize = 8
 )
@@ -28,10 +28,33 @@ type Token struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	Duration  int64
-	Value     string
+	Code      string `query:"code"`
 	Type      TokenType
 	Status    TokenStatus
 	UserID    uint
+}
+
+// Load
+func (token *Token) Load() (err error) {
+
+	db, err := GetDB()
+	if err != nil {
+		return
+	}
+	defer db.Close()
+
+	if db.Where("code = ?", token.Code).First(token).RecordNotFound() {
+		err = fmt.Errorf("token not found")
+	}
+	return
+}
+
+// UsedAsActivate
+func (token *Token) UsedAs(t TokenType) (err error) {
+	if token.Type != t {
+		return fmt.Errorf("invalid token type")
+	}
+	return token.Use()
 }
 
 // NewToken
@@ -46,15 +69,15 @@ func NewToken(t TokenType, user *User) (token *Token, err error) {
 	token = &Token{}
 	token.UserID = user.ID
 
-	if t < TypeMin || t > TypeMax {
+	if t < TokenTypeMin || t > TokenTypeMax {
 		err = fmt.Errorf("invalid token type")
 		return
 	}
 	token.Type = t
-	token.Status = StatusValid
+	token.Status = TokenStatusValid
 
 	token.Duration = int64(24 * 60 * 60 * 2)
-	token.Value = randString(TokenSize)
+	token.Code = randString(TokenSize)
 
 	db, err := GetDB()
 	if err != nil {
@@ -63,7 +86,7 @@ func NewToken(t TokenType, user *User) (token *Token, err error) {
 	defer db.Close()
 
 	tt := &Token{}
-	if !db.Where("value = ?", token.Value).First(tt).RecordNotFound() {
+	if !db.Where("code = ?", token.Code).First(tt).RecordNotFound() {
 		err = fmt.Errorf("create token value failed")
 		return
 	}
@@ -73,8 +96,8 @@ func NewToken(t TokenType, user *User) (token *Token, err error) {
 }
 
 // Use
-func (token *Token) UsedBy(user *User) (err error) {
-	if token.Status == StatusInvalid {
+func (token *Token) Use() (err error) {
+	if token.Status == TokenStatusInvalid {
 		return fmt.Errorf("invalid token")
 	}
 
@@ -84,18 +107,30 @@ func (token *Token) UsedBy(user *User) (err error) {
 		return fmt.Errorf("expired token")
 	}
 
-	if token.UserID != user.ID {
-		return fmt.Errorf("invalid user")
-	}
-
 	db, err := GetDB()
 	if err != nil {
 		return
 	}
 	defer db.Close()
 
-	token.Status = StatusInvalid
+	token.Status = TokenStatusInvalid
 	db.Save(token)
+	return
+}
+
+// Owner
+func (token *Token) Owner() (user *User, err error) {
+	db, err := GetDB()
+	if err != nil {
+		return
+	}
+	defer db.Close()
+
+	user = &User{}
+	if db.Where("user_id = ?", token.UserID).First(user).RecordNotFound() {
+		err = fmt.Errorf("no user found")
+	}
+
 	return
 }
 

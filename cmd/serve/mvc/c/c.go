@@ -4,25 +4,12 @@ import (
 	"encoding/gob"
 	"fmt"
 	"github.com/gorilla/sessions"
-	"github.com/jordan-wright/email"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/lpisces/bootstrap/cmd/serve"
 	"github.com/lpisces/bootstrap/cmd/serve/mvc/m"
 	"net/http"
-	"net/smtp"
-	"net/textproto"
 )
-
-type MailData struct {
-	To      []string
-	From    string
-	Cc      []string
-	Bcc     []string
-	Subject string
-	Text    []byte
-	HTML    []byte
-}
 
 func init() {
 	gob.Register(RegFlash{})
@@ -102,20 +89,4 @@ func CurrentUser(c echo.Context) (user *m.User, err error) {
 		return
 	}
 	return
-}
-
-// SendMail
-func SendMail(data *MailData) (err error) {
-	conf := serve.Conf.Mail
-	e := &email.Email{
-		To:      data.To,
-		From:    data.From,
-		Subject: data.Subject,
-		Text:    data.Text,
-		HTML:    data.HTML,
-		Headers: textproto.MIMEHeader{},
-	}
-	return e.Send(
-		fmt.Sprintf("%s:%s", conf.Hostname, conf.Port),
-		smtp.PlainAuth("", conf.Username, conf.Password, conf.Hostname))
 }

@@ -29,6 +29,12 @@ type (
 		User     *m.User
 		Error    map[string]string
 	}
+	ActivateFlash struct {
+		Title    string
+		SiteName string
+		User     *m.User
+		Error    map[string]string
+	}
 )
 
 // GetRegister register page
@@ -94,6 +100,9 @@ func PostRegister(c echo.Context) (err error) {
 		return c.Redirect(http.StatusFound, "/register")
 	}
 
+	if err := user.SendActivateMail(); err != nil {
+		return err
+	}
 	return c.Redirect(http.StatusFound, "/login")
 }
 
@@ -240,4 +249,29 @@ func PostForgetPassword(c echo.Context) (err error) {
 	}
 
 	return c.Render(http.StatusOK, "forget_password_ok", data)
+}
+
+// PostForgetPassword
+func GetActivate(c echo.Context) (err error) {
+	token := new(m.Token)
+	if err = c.Bind(token); err != nil {
+		return
+	}
+
+	data := ActivateFlash{
+		Title:    serve.Conf.Site.Name + "-" + "激活账户",
+		SiteName: serve.Conf.Site.Name,
+		Error:    map[string]string{},
+		User:     &m.User{},
+	}
+
+	if err = token.Load(); err != nil {
+		data.Error["Token"] = "非法Token"
+	}
+
+	if err = token.UsedAs(m.TokenTypeActivate); err != nil {
+		data.Error["Token"] = "非法Token"
+	}
+
+	return c.Render(http.StatusOK, "activate", data)
 }

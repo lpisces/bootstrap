@@ -2,16 +2,46 @@ package m
 
 import (
 	//"github.com/labstack/gommon/log"
+	"fmt"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
+	"github.com/jordan-wright/email"
 	"github.com/lpisces/bootstrap/cmd/serve"
 	"golang.org/x/crypto/bcrypt"
+	"net/smtp"
+	"net/textproto"
 )
 
 var (
 	DB *gorm.DB
 )
+
+type MailData struct {
+	To      []string
+	From    string
+	Cc      []string
+	Bcc     []string
+	Subject string
+	Text    []byte
+	HTML    []byte
+}
+
+// SendMail
+func SendMail(data *MailData) (err error) {
+	conf := serve.Conf.SMTP
+	e := &email.Email{
+		To:      data.To,
+		From:    data.From,
+		Subject: data.Subject,
+		Text:    data.Text,
+		HTML:    data.HTML,
+		Headers: textproto.MIMEHeader{},
+	}
+	return e.Send(
+		fmt.Sprintf("%s:%s", conf.Hostname, conf.Port),
+		smtp.PlainAuth("", conf.Username, conf.Password, conf.Hostname))
+}
 
 func Migrate() (err error) {
 	//config := serve.Conf

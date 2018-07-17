@@ -1,0 +1,26 @@
+{{define "activate"}}
+{{template "header" .}}
+<div class="container h-100">
+	<div class="row h-100 mt-4 justify-content-sm-center">
+		<div class="col-sm-4 card">
+			<div class="card-body">
+			<h4 class="card-title">激活账户</h4>
+			<p class="card-text">
+				{{if ne 0 (len .Error)}}
+					{{.Error.Token}}
+        {{else}}
+					激活账户成功!
+				{{end}}
+			</p>
+			<p class="text-sm-right">
+				<a href="/login">登录</a>
+				<span>/</span>
+				<a href="/register">注册</a>
+			</p>
+			<p class="mt-5 mb-3 text-muted">&copy; {{.SiteName}} 2017-2018</p>
+			</div>
+		</div>
+	</div>
+</div>
+{{template "footer" .}}
+{{end}}
