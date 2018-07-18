@@ -277,6 +277,13 @@ func (u *User) Save() (err error) {
 		return err
 	}
 	defer db.Close()
+
+	hash, err := HashPassword(u.Password) //bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.MinCost)
+	if err != nil {
+		return
+	}
+
+	u.PasswordDigest = hash
 	db.Save(u)
 	return
 }

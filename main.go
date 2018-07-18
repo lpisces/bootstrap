@@ -7,6 +7,10 @@ import (
 	"os"
 )
 
+const (
+	Embed = false
+)
+
 func main() {
 	app := cli.NewApp()
 	app.Name = "bootstrap"
