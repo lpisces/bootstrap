@@ -86,6 +86,21 @@ func (u *User) Exist() (exist bool, err error) {
 	return
 }
 
+// Load
+func (u *User) Load() (err error) {
+
+	db, err := GetDB()
+	if err != nil {
+		return
+	}
+	defer db.Close()
+
+	if db.Where("email = ?", u.Email).First(u).RecordNotFound() {
+		return fmt.Errorf("not exists")
+	}
+	return
+}
+
 // Auth
 func (u *User) Auth() (bool, error) {
 
@@ -144,7 +159,7 @@ func (u *User) SignOut(c echo.Context) (err error) {
 }
 
 // LastActivateToken
-func (u *User) LastActivateToken() (t *Token, err error) {
+func (u *User) LastToken(tokenType TokenType) (t *Token, err error) {
 
 	db, err := GetDB()
 	if err != nil {
@@ -153,7 +168,7 @@ func (u *User) LastActivateToken() (t *Token, err error) {
 	defer db.Close()
 
 	t = &Token{}
-	if db.Where("user_id = ?", u.ID).Where("type = ?", TokenTypeActivate).First(t).RecordNotFound() {
+	if db.Where("user_id = ?", u.ID).Where("type = ?", tokenType).Last(t).RecordNotFound() {
 		err = fmt.Errorf("no activate token found")
 	}
 	return
@@ -167,8 +182,8 @@ func (u *User) IsAdmin() (ok bool) {
 // SendActivateMail
 func (u *User) SendActivateMail() (err error) {
 
-	tmpl := template.Must(template.ParseGlob("cmd/serve/mvc/v/mail/*.html"))
-	token, err := u.LastActivateToken()
+	tmpl := template.Must(template.ParseGlob("cmd/serve/mvc/v/mail/activate_mail.html"))
+	token, err := u.LastToken(TokenTypeActivate)
 	if err != nil {
 		return err
 	}
@@ -205,7 +220,40 @@ func (u *User) SendActivateMail() (err error) {
 
 // SendForgetPasswordMail
 func (u *User) SendForgetPasswordMail() (err error) {
-	return
+	tmpl := template.Must(template.ParseGlob("cmd/serve/mvc/v/mail/forget_password_mail.html"))
+	token, err := u.LastToken(TokenTypeResetPassword)
+	if err != nil {
+		return err
+	}
+
+	data := struct {
+		User     *User
+		Token    *Token
+		Title    string
+		SiteName string
+		BaseURL  string
+	}{
+		User:     u,
+		Token:    token,
+		Title:    serve.Conf.Site.Name + "-" + "重置密码邮件",
+		SiteName: serve.Conf.Site.Name,
+		BaseURL:  serve.Conf.Site.BaseURL,
+	}
+
+	var mailHTML bytes.Buffer
+	if err := tmpl.Execute(&mailHTML, data); err != nil {
+		return err
+	}
+
+	config := serve.Conf.SMTP
+	mail := &MailData{
+		To:      []string{u.Email},
+		From:    fmt.Sprintf("%s <%s>", config.FromName, config.FromAddr),
+		Subject: fmt.Sprintf("[%s]重置密码邮件", serve.Conf.Site.Name),
+		//Text:    []byte("activate mail"),
+		HTML: mailHTML.Bytes(),
+	}
+	return SendMail(mail)
 }
 
 // Activate
@@ -218,6 +266,17 @@ func (u *User) Activate() (err error) {
 
 	u.Activated = true
 
+	db.Save(u)
+	return
+}
+
+// Save
+func (u *User) Save() (err error) {
+	db, err := GetDB()
+	if err != nil {
+		return err
+	}
+	defer db.Close()
 	db.Save(u)
 	return
 }

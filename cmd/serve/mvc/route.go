@@ -31,4 +31,8 @@ func Route(e *echo.Echo) {
 	e.GET("forget_password", c.GetForgetPassword)
 	e.POST("forget_password", c.PostForgetPassword)
 
+	// reset password
+	e.GET("reset_password", c.GetResetPassword)
+	e.POST("reset_password", c.PostResetPassword)
+
 }

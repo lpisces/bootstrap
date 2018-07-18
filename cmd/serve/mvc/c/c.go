@@ -15,6 +15,7 @@ func init() {
 	gob.Register(RegFlash{})
 	gob.Register(LoginFlash{})
 	gob.Register(ForgetPasswordFlash{})
+	gob.Register(ResetPasswordFlash{})
 }
 
 // GetSession

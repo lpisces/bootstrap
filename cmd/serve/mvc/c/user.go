@@ -15,7 +15,6 @@ type (
 		User     *m.User
 		Error    map[string]string
 	}
-
 	LoginFlash struct {
 		Title    string
 		SiteName string
@@ -34,6 +33,13 @@ type (
 		SiteName string
 		User     *m.User
 		Error    map[string]string
+	}
+	ResetPasswordFlash struct {
+		Title    string
+		SiteName string
+		User     *m.User
+		Error    map[string]string
+		Token    *m.Token
 	}
 )
 
@@ -248,10 +254,16 @@ func PostForgetPassword(c echo.Context) (err error) {
 		return c.Redirect(http.StatusFound, "/forget_password")
 	}
 
+	data.User.Load()
+	m.NewToken(m.TokenTypeResetPassword, data.User)
+	if err := data.User.SendForgetPasswordMail(); err != nil {
+		return err
+	}
+
 	return c.Render(http.StatusOK, "forget_password_ok", data)
 }
 
-// PostForgetPassword
+// GetActivate
 func GetActivate(c echo.Context) (err error) {
 	token := new(m.Token)
 	if err = c.Bind(token); err != nil {
@@ -274,4 +286,100 @@ func GetActivate(c echo.Context) (err error) {
 	}
 
 	return c.Render(http.StatusOK, "activate", data)
+}
+
+// GetResetPassword
+func GetResetPassword(c echo.Context) (err error) {
+	token := new(m.Token)
+	if err = c.Bind(token); err != nil {
+		return
+	}
+
+	data := ResetPasswordFlash{
+		Title:    serve.Conf.Site.Name + "-" + "重置密码",
+		SiteName: serve.Conf.Site.Name,
+		Error:    map[string]string{},
+		User:     &m.User{},
+		Token:    token,
+	}
+
+	if err = token.Load(); err != nil {
+		data.Error["Token"] = "非法Token"
+	}
+
+	// get session
+	sess, err := GetSession(c)
+	if err != nil {
+		return err
+	}
+
+	if flashes := sess.Flashes(); len(flashes) > 0 {
+		data = flashes[0].(ResetPasswordFlash)
+	}
+	sess.Save(c.Request(), c.Response())
+
+	return c.Render(http.StatusOK, "reset_password", data)
+}
+
+// PostResetPassword
+func PostResetPassword(c echo.Context) (err error) {
+	token := new(m.Token)
+	if err = c.Bind(token); err != nil {
+		return
+	}
+
+	data := ResetPasswordFlash{
+		Title:    serve.Conf.Site.Name + "-" + "重置密码",
+		SiteName: serve.Conf.Site.Name,
+		Error:    map[string]string{},
+		User:     &m.User{},
+		Token:    token,
+	}
+
+	errorRedirect := func(c echo.Context, data ResetPasswordFlash) error {
+		sess, err := GetSession(c)
+		if err != nil {
+			return err
+		}
+		sess.AddFlash(data)
+		sess.Save(c.Request(), c.Response())
+		return c.Redirect(http.StatusFound, "/reset_password")
+	}
+
+	// not found
+	if err = token.Load(); err != nil {
+		data.Error["Token"] = "非法Token"
+		return errorRedirect(c, data)
+	}
+
+	// wrong type
+	if token.Type != m.TokenTypeResetPassword {
+		data.Error["Token"] = "非法Token"
+		return errorRedirect(c, data)
+	}
+
+	// no owner
+	user, err := token.Owner()
+	if err != nil {
+		data.Error["Token"] = "非法Token"
+		return errorRedirect(c, data)
+	}
+
+	if err = c.Bind(user); err != nil {
+		return err
+	}
+
+	// validate password
+	if ok, errs := user.Validate(); !ok {
+		data.Error = errs
+		return errorRedirect(c, data)
+	}
+
+	if err := user.Save(); err != nil {
+		data.Error["Password"] = "保存密码失败"
+		return errorRedirect(c, data)
+	}
+
+	token.UsedAs(m.TokenTypeResetPassword)
+	return c.Render(http.StatusOK, "reset_password_ok", data)
 }

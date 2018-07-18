@@ -28,7 +28,7 @@ type Token struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	Duration  int64
-	Code      string `query:"code"`
+	Code      string `query:"code" form:"code"`
 	Type      TokenType
 	Status    TokenStatus
 	UserID    uint
@@ -127,7 +127,7 @@ func (token *Token) Owner() (user *User, err error) {
 	defer db.Close()
 
 	user = &User{}
-	if db.Where("user_id = ?", token.UserID).First(user).RecordNotFound() {
+	if db.Where("id = ?", token.UserID).First(user).RecordNotFound() {
 		err = fmt.Errorf("no user found")
 	}
 
