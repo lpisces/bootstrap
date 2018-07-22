@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/lpisces/bootstrap/cmd/serve/mvc"
+	pcli "github.com/lpisces/pcheck/cmd/cli"
 	"gopkg.in/urfave/cli.v1"
 	"log"
 	"os"
@@ -9,32 +9,46 @@ import (
 
 func main() {
 	app := cli.NewApp()
-	app.Name = "bootstrap"
-	app.Usage = "bootstrap for website server development"
+	app.Name = "pcheck"
+	app.Usage = "package check"
 
 	app.Commands = []cli.Command{
 		{
-			Name:    "serve",
-			Aliases: []string{"s"},
-			Usage:   "start web server",
-			Action:  mvc.Run,
+			Name:   "cli",
+			Usage:  "execute command line",
+			Action: pcli.Run,
 			Flags: []cli.Flag{
 				cli.StringFlag{
 					Name:  "env, e",
-					Usage: "set run env",
-					Value: "development",
-				},
-				cli.StringFlag{
-					Name:  "port, p",
-					Usage: "listen port",
-				},
-				cli.StringFlag{
-					Name:  "bind, b",
-					Usage: "bind host",
+					Usage: "set env",
+					Value: "dev",
 				},
 				cli.StringFlag{
 					Name:  "config, c",
 					Usage: "load config file",
+				},
+				cli.StringFlag{
+					Name:  "source, s",
+					Usage: "data source",
+					Value: "./package.csv",
+				},
+				cli.StringFlag{
+					Name:  "output, o",
+					Usage: "check result output",
+					Value: "./result.csv",
+				},
+				cli.StringFlag{
+					Name:  "cache",
+					Usage: "cache dir",
+					Value: "./cache",
+				},
+				cli.StringFlag{
+					Name:  "key, k",
+					Usage: "kuaidi100 key",
+				},
+				cli.StringFlag{
+					Name:  "customer",
+					Usage: "kuaidi100 customer id",
 				},
 			},
 		},
@@ -44,5 +58,4 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 }
