@@ -61,7 +61,22 @@
 						{{end}}
 					</div>
 				</div>
-				<button type="submit" class="btn btn-primary btn-sm">注册</button>
+				<div class="form-row">
+  				<div class="form-group col-sm-4">
+  		    	<label for="inputCaptcha">验证码</label>
+  				  <input type=hidden name="captcha_id" value="{{.Captcha}}">
+  		    	<input type="text" name="captcha" value="" id="inputCaptcha" class="form-control form-control-sm 
+  				  {{if ne 0 (len .Error) }} {{if eq "" (index .Error "Captcha")}}is-valid{{else}}is-invalid{{end}} {{end}}" 
+  				  placeholder="验证码" required>
+  				</div>
+  				<div class="form-group col-sm-4">
+  		    	<label for="inputCaptcha"></label>
+  				  <a href="javascript:void(0)" onclick="reload()"><img id="captchaImage" class="captcha" src="/captcha/{{.Captcha}}.png" alt="Captcha image"></a>
+  				</div>
+				</div>
+				<div class="form-group">
+				  <button type="submit" class="btn btn-primary btn-sm">注册</button>
+				</div>
 				<p class="text-sm-right">
 					<a href="/forget_password">忘记密码?</a>
 					<span>/</span>
@@ -73,5 +88,19 @@
 		</div>
 	</div>
 </div>
+<script>
+function setSrcQuery(e, q) {
+	var src  = e.src;
+	var p = src.indexOf('?');
+	if (p >= 0) {
+		src = src.substr(0, p);
+	}
+	e.src = src + "?" + q
+}
+function reload() {
+	setSrcQuery(document.getElementById('captchaImage'), "reload=" + (new Date()).getTime());
+	return false;
+}
+</script>
 {{template "footer"}}
 {{end}}

@@ -1,6 +1,7 @@
 package mvc
 
 import (
+	"github.com/dchest/captcha"
 	"github.com/labstack/echo"
 	"github.com/lpisces/bootstrap/cmd/serve/mvc/c"
 )
@@ -28,11 +29,16 @@ func Route(e *echo.Echo) {
 	e.GET("/logout", c.GetLogout)
 
 	// forget_password
-	e.GET("forget_password", c.GetForgetPassword)
-	e.POST("forget_password", c.PostForgetPassword)
+	e.GET("/forget_password", c.GetForgetPassword)
+	e.POST("/forget_password", c.PostForgetPassword)
 
 	// reset password
-	e.GET("reset_password", c.GetResetPassword)
-	e.POST("reset_password", c.PostResetPassword)
+	e.GET("/reset_password", c.GetResetPassword)
+	e.POST("/reset_password", c.PostResetPassword)
 
+	// captcha
+	e.GET("/captcha/:id", func(c echo.Context) error {
+		captcha.Server(captcha.StdWidth/2, captcha.StdHeight/2).ServeHTTP(c.Response(), c.Request())
+		return nil
+	})
 }

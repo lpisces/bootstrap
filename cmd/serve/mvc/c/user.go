@@ -3,6 +3,7 @@ package c
 import (
 	"github.com/labstack/echo"
 	//"github.com/labstack/gommon/log"
+	"github.com/dchest/captcha"
 	"github.com/lpisces/bootstrap/cmd/serve"
 	"github.com/lpisces/bootstrap/cmd/serve/mvc/m"
 	"net/http"
@@ -14,6 +15,7 @@ type (
 		SiteName string
 		User     *m.User
 		Error    map[string]string
+		Captcha  string
 	}
 	LoginFlash struct {
 		Title    string
@@ -54,6 +56,7 @@ func GetRegister(c echo.Context) (err error) {
 		SiteName: serve.Conf.Site.Name,
 		User:     &m.User{},
 		Error:    make(map[string]string),
+		Captcha:  captcha.New(),
 	}
 
 	// session flashes
